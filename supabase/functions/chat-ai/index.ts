@@ -2,12 +2,13 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+// Hardcode AI21 API key (Note: In production, this should be in a .env file)
+const ai21ApiKey = Deno.env.get('AI21_API_KEY') || 'ea7d40c6-ca1e-4c39-8622-b423702a95f5';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -41,7 +42,7 @@ serve(async (req) => {
       .single();
 
     const isPremium = subscription?.subscribed || false;
-    const model = isPremium ? 'gpt-5-2025-08-07' : 'gpt-5-mini-2025-08-07';
+    const model = isPremium ? 'jamba-1.5-large' : 'jamba-mini';
 
     // Get conversation history
     const { data: messages } = await supabaseClient
@@ -51,7 +52,7 @@ serve(async (req) => {
       .order('created_at', { ascending: true })
       .limit(20);
 
-    // Build message history for OpenAI
+    // Build message history for AI21
     const conversationMessages = [
       { 
         role: 'system', 
@@ -61,31 +62,37 @@ serve(async (req) => {
       { role: 'user', content: message }
     ];
 
+    // Combine messages into a single input string for AI21
+    const combinedInput = conversationMessages
+      .map(msg => `${msg.role}: ${msg.content}`)
+      .join('\n');
+
     console.log(`Using model: ${model} for user: ${user.id}`);
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call AI21 API
+    const response = await fetch('https://api.ai21.com/studio/v1/maestro/runs', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${ai21ApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: model,
-        messages: conversationMessages,
-        max_completion_tokens: isPremium ? 2000 : 1000,
-        stream: false,
+        input: combinedInput,
+        output_type: { type: "string" },
+        tools: [{ type: "web_search" }],
+        max_tokens: isPremium ? 2000 : 1000,
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('AI21 API error:', errorData);
+      throw new Error(`AI21 API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const assistantMessage = data.choices[0].message.content;
+    const assistantMessage = data.output; // Adjust based on AI21's actual response structure
 
     // Save both user message and assistant response to database
     const { error: userMsgError } = await supabaseClient
