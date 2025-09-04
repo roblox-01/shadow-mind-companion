@@ -263,6 +263,8 @@ const SidebarTrigger = React.forwardRef
 >(({ className, onClick, ...props }, ref) => {
   const { toggleSidebar, state } = useSidebar()
 
+  const IconComponent = state === "collapsed" ? Menu : PanelLeft
+
   return (
     <Button
       ref={ref}
@@ -276,15 +278,12 @@ const SidebarTrigger = React.forwardRef
       }}
       {...props}
     >
-      {state === "collapsed" ? (
-        <Menu className="h-4 w-4" />
-      ) : (
-        <PanelLeft className="h-4 w-4" />
-      )}
+      <IconComponent className="h-4 w-4" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
 })
+
 SidebarTrigger.displayName = "SidebarTrigger"
 
 const SidebarRail = React.forwardRef
