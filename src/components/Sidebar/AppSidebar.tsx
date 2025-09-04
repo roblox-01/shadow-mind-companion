@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Plus, Crown, LogOut, Trash2, Menu, PanelLeft } from 'lucide-react';
+import { MessageSquare, Plus, Crown, Settings, LogOut, Trash2 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
@@ -70,9 +70,6 @@ export function AppSidebar() {
         title: "New conversation created",
         description: "Start chatting with ShadowAI!"
       });
-      
-      // Refresh conversations list to include the new one
-      loadConversations();
     } catch (error) {
       console.error('Error creating conversation:', error);
       toast({
@@ -111,35 +108,25 @@ export function AppSidebar() {
   };
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/auth');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
-    }
+    await signOut();
+    navigate('/auth');
   };
 
   if (!user) return null;
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
+<Sidebar collapsible="icon">      <SidebarContent>
         {/* Header */}
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            {state !== 'collapsed' && (
-              <h2 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                ShadowAI
-              </h2>
-            )}
-          </div>
-        </div>
-
+<div className="p-4 border-b">
+  <div className="flex items-center gap-2">
+    <SidebarTrigger className="shrink-0" />
+    {state !== 'collapsed' && (
+      <h2 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+        ShadowAI
+      </h2>
+    )}
+  </div>
+</div>
         {/* New Chat Button */}
         <div className="p-4">
           <Button
@@ -154,9 +141,7 @@ export function AppSidebar() {
 
         {/* Conversations */}
         <SidebarGroup>
-          {state !== 'collapsed' && (
-            <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
-          )}
+          <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {conversations.map((conversation) => (
@@ -182,7 +167,7 @@ export function AppSidebar() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
                           onClick={(e) => deleteConversation(conversation.id, e)}
                         >
                           <Trash2 className="h-3 w-3" />
@@ -210,7 +195,7 @@ export function AppSidebar() {
                   >
                     <Crown className="h-4 w-4" />
                     {state !== 'collapsed' && <span>Upgrade</span>}
-                    {state !== 'collapsed' && subscription?.subscribed && (
+                    {state !== 'collapsed' && subscription.subscribed && (
                       <span className="ml-auto text-xs text-primary">PRO</span>
                     )}
                   </NavLink>
@@ -223,7 +208,7 @@ export function AppSidebar() {
         {/* User Actions */}
         <div className="mt-auto p-4 border-t">
           <div className="space-y-2">
-            {state !== 'collapsed' && user?.email && (
+            {state !== 'collapsed' && (
               <div className="text-xs text-muted-foreground truncate">
                 {user.email}
               </div>
@@ -241,27 +226,5 @@ export function AppSidebar() {
         </div>
       </SidebarContent>
     </Sidebar>
-  );
-}
-
-// Custom SidebarTrigger component for your layout
-export function CustomSidebarTrigger({ className, ...props }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar, state } = useSidebar();
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className={`h-7 w-7 ${className}`}
-      onClick={toggleSidebar}
-      {...props}
-    >
-      {state === "collapsed" ? (
-        <Menu className="h-4 w-4" />
-      ) : (
-        <PanelLeft className="h-4 w-4" />
-      )}
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
   );
 }
