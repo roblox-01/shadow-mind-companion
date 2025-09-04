@@ -10,7 +10,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -115,18 +114,19 @@ export function AppSidebar() {
   if (!user) return null;
 
   return (
-<Sidebar collapsible="icon">      <SidebarContent>
-        {/* Header */}
-<div className="p-4 border-b">
-  <div className="flex items-center gap-2">
-    <SidebarTrigger className="shrink-0" />
-    {state !== 'collapsed' && (
-      <h2 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-        ShadowAI
-      </h2>
-    )}
-  </div>
-</div>
+    <Sidebar collapsible="icon">
+      <SidebarContent>
+        {/* Header - SidebarTrigger removed */}
+        <div className="p-4 border-b">
+          <div className="flex items-center gap-2">
+            {state !== 'collapsed' && (
+              <h2 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                ShadowAI
+              </h2>
+            )}
+          </div>
+        </div>
+
         {/* New Chat Button */}
         <div className="p-4">
           <Button
