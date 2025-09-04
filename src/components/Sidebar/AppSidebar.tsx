@@ -115,8 +115,7 @@ export function AppSidebar() {
   if (!user) return null;
 
   return (
-<Sidebar>
-      <SidebarContent>
+<Sidebar collapsible="icon">      <SidebarContent>
         {/* Header */}
 <div className="p-4 border-b">
   <div className="flex items-center gap-2">
