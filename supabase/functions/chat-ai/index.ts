@@ -2,13 +2,13 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Hardcode AI21 API key (Note: In production, this should be in a .env file)
-const ai21ApiKey = Deno.env.get('AI21_API_KEY') || 'ea7d40c6-ca1e-4c39-8622-b423702a95f5';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Use environment variable for AI21 API key
+const ai21ApiKey = Deno.env.get('AI21_API_KEY') || 'ea7d40c6-ca1e-4c39-8622-b423702a95f5';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -42,7 +42,7 @@ serve(async (req) => {
       .single();
 
     const isPremium = subscription?.subscribed || false;
-    const model = isPremium ? 'jamba-1.5-large' : 'jamba-mini';
+    const model = isPremium ? 'jamba-1.5-large' : 'jamba-1.5-mini'; // Updated to jamba-1.5-mini based on naming conventions
 
     // Get conversation history
     const { data: messages } = await supabaseClient
@@ -62,7 +62,7 @@ serve(async (req) => {
       { role: 'user', content: message }
     ];
 
-    // Combine messages into a single input string for AI21
+    // Combine messages into a single input string
     const combinedInput = conversationMessages
       .map(msg => `${msg.role}: ${msg.content}`)
       .join('\n');
@@ -77,7 +77,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: model,
+        models: [model], // Use array format as per Python SDK example
         input: combinedInput,
         output_type: { type: "string" },
         tools: [{ type: "web_search" }],
@@ -86,13 +86,14 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('AI21 API error:', errorData);
-      throw new Error(`AI21 API error: ${response.status}`);
+      const errorData = await response.json(); // Parse JSON for detailed error
+      console.error('AI21 API error:', JSON.stringify(errorData, null, 2));
+      throw new Error(`AI21 API error: ${response.status} - ${errorData.message || errorData.error || 'Unknown error'}`);
     }
 
     const data = await response.json();
-    const assistantMessage = data.output; // Adjust based on AI21's actual response structure
+    // Adjust based on expected response structure (based on SDK examples)
+    const assistantMessage = data.result?.output || data.output || 'No response content'; // Fallback if structure is unknown
 
     // Save both user message and assistant response to database
     const { error: userMsgError } = await supabaseClient
@@ -113,6 +114,7 @@ serve(async (req) => {
 
     if (userMsgError || assistantMsgError) {
       console.error('Error saving messages:', userMsgError || assistantMsgError);
+      throw new Error('Failed to save messages to database');
     }
 
     return new Response(JSON.stringify({ 
