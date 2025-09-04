@@ -118,17 +118,16 @@ export function AppSidebar() {
     <Sidebar className={state === 'collapsed' ? "w-14" : "w-64"}>
       <SidebarContent>
         {/* Header */}
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            {state !== 'collapsed' && (
-              <h2 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                ShadowAI
-              </h2>
-            )}
-            <SidebarTrigger />
-          </div>
-        </div>
-
+<div className="p-4 border-b">
+  <div className="flex items-center gap-2">
+    <SidebarTrigger className="shrink-0" />
+    {state !== 'collapsed' && (
+      <h2 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+        ShadowAI
+      </h2>
+    )}
+  </div>
+</div>
         {/* New Chat Button */}
         <div className="p-4">
           <Button
