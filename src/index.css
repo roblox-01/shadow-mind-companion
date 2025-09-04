@@ -4,38 +4,6 @@
 
 @layer base {
   :root {
-    /* Light theme colors */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 242 47% 58%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 242 47% 58%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 242 47% 58%;
-    --radius: 0.75rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 242 47% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 242 47% 58%;
-  }
-
-  .dark {
     /* Dark theme colors matching the original design */
     --background: 225 39% 6%;
     --foreground: 210 40% 98%;
@@ -56,6 +24,7 @@
     --border: 220 13% 23%;
     --input: 225 39% 12%;
     --ring: 242 47% 58%;
+    --radius: 0.75rem;
     --sidebar-background: 225 39% 10%;
     --sidebar-foreground: 220 9% 88%;
     --sidebar-primary: 242 47% 58%;
@@ -83,6 +52,8 @@
   body {
     @apply bg-background text-foreground font-sans leading-relaxed;
     font-family: 'Inter', sans-serif;
+    height: 100vh;
+    overflow: hidden;
   }
   
   /* Add the mesh background */
