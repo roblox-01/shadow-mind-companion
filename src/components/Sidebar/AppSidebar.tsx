@@ -115,7 +115,7 @@ export function AppSidebar() {
   if (!user) return null;
 
   return (
-    <Sidebar className={state === 'collapsed' ? "w-14" : "w-64"}>
+<Sidebar>
       <SidebarContent>
         {/* Header */}
 <div className="p-4 border-b">
