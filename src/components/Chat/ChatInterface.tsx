@@ -181,7 +181,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
 
       toast({
         title: "Message sent",
-        description: "Using jama-1.5-large model",
+        description: "Using jamba-large-1.6 model",
       });
     } catch (error) {
       console.error('Error sending message:', error);
