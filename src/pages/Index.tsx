@@ -66,7 +66,7 @@ const Index = () => {
             <Sparkles className="h-8 w-8 text-primary" />
             Welcome to ShadowAI
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl font-bold text-muted-foreground max-w-2xl mx-auto">
             Your intelligent AI companion for conversations, creativity, and problem-solving
           </p>
           <div className="flex items-center justify-center gap-2 mt-4">
