@@ -87,7 +87,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: "jamba-large-1.6",
+        model: "jamba-large-1.7",
         messages: messages,
         max_tokens: 1000,
         temperature: 0.7,
