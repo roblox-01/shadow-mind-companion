@@ -773,5 +773,3 @@ export {
   CustomSidebarTrigger,
   useSidebar,
 };
-
-export default App;
