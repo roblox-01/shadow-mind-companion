@@ -20,6 +20,8 @@ interface ChatInterfaceProps {
   conversationId: string;
 }
 
+const AI21_API_KEY = 'b1fb645b-e992-48e1-9dd6-554f8fd0bd99';
+
 export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -36,33 +38,9 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
     scrollToBottom();
   }, [messages]);
 
-  // Load existing messages
   useEffect(() => {
     if (!conversationId) return;
-    
     loadMessages();
-    
-    // Set up realtime subscription for new messages
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => {
-          const newMessage = payload.new as Message;
-          setMessages(prev => [...prev, newMessage]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [conversationId]);
 
   const loadMessages = async () => {
@@ -85,6 +63,79 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
     }
   };
 
+  const callAI21API = async (conversationMessages: Message[]): Promise<string> => {
+    const systemMessage = {
+      role: "system",
+      content: "You are ShadowAI, a helpful AI assistant. You are knowledgeable, conversational, and provide detailed responses using markdown formatting when appropriate. Keep your responses engaging and well-structured."
+    };
+
+    const messages = [systemMessage];
+    
+    // Add recent conversation history (last 10 messages)
+    const recentMessages = conversationMessages.slice(-10);
+    recentMessages.forEach(msg => {
+      messages.push({
+        role: msg.role,
+        content: msg.content
+      });
+    });
+
+    const response = await fetch('https://api.ai21.com/studio/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${AI21_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: "jama-1.5-large",
+        messages: messages,
+        max_tokens: 1000,
+        temperature: 0.7,
+        top_p: 0.9
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI21 API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid AI response format');
+    }
+
+    return data.choices[0].message.content.trim();
+  };
+
+  const saveMessage = async (role: 'user' | 'assistant', content: string): Promise<string> => {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        role: role,
+        content: content,
+        user_id: session?.user?.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data.id;
+  };
+
+  const updateConversationTitle = async (firstMessage: string) => {
+    const title = firstMessage.length > 50 ? firstMessage.substring(0, 47) + '...' : firstMessage;
+    
+    await supabase
+      .from('conversations')
+      .update({ 
+        title: title,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', conversationId);
+  };
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || !session) return;
@@ -94,28 +145,50 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: {
-          message: userMessage,
-          conversationId: conversationId,
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      // Save user message
+      const userMessageId = await saveMessage('user', userMessage);
+      
+      // Add user message to UI immediately
+      const newUserMessage: Message = {
+        id: userMessageId,
+        role: 'user',
+        content: userMessage,
+        created_at: new Date().toISOString()
+      };
+      
+      const updatedMessages = [...messages, newUserMessage];
+      setMessages(updatedMessages);
 
-      if (error) throw error;
+      // Update conversation title if it's the first message
+      if (messages.length === 0) {
+        await updateConversationTitle(userMessage);
+      }
 
-      // Messages are automatically added via realtime subscription
+      // Get AI response
+      const aiResponse = await callAI21API(updatedMessages);
+      
+      // Save AI response
+      const aiMessageId = await saveMessage('assistant', aiResponse);
+      
+      // Add AI response to UI
+      const newAiMessage: Message = {
+        id: aiMessageId,
+        role: 'assistant',
+        content: aiResponse,
+        created_at: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, newAiMessage]);
+
       toast({
         title: "Message sent",
-        description: `Using ${data.model} ${data.isPremium ? '(Premium)' : '(Free)'}`,
+        description: "Using jama-1.5-large model",
       });
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message",
         variant: "destructive",
       });
     } finally {
@@ -128,8 +201,8 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
       {/* Header */}
       <div className="border-b p-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">ShadowAI Chat</h2>
-        <Badge variant={subscription.subscribed ? "default" : "secondary"}>
-          {subscription.subscribed ? subscription.subscription_tier : "Free"}
+        <Badge variant={subscription?.subscribed ? "default" : "secondary"}>
+          {subscription?.subscribed ? subscription.subscription_tier : "Free"}
         </Badge>
       </div>
 
@@ -140,7 +213,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
             <div className="text-center text-muted-foreground py-8">
               <h3 className="text-lg font-medium mb-2">Welcome to ShadowAI!</h3>
               <p>Start a conversation by typing a message below.</p>
-              {!subscription.subscribed && (
+              {!subscription?.subscribed && (
                 <p className="text-sm mt-2">
                   Upgrade to Premium for advanced AI models and unlimited messages.
                 </p>
@@ -157,7 +230,14 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
                     ? 'bg-primary text-primary-foreground' 
                     : 'bg-muted'
                 }`}>
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <div 
+                    className="whitespace-pre-wrap prose prose-sm max-w-none dark:prose-invert"
+                    dangerouslySetInnerHTML={{ 
+                      __html: message.role === 'assistant' 
+                        ? message.content.replace(/\n/g, '<br>') 
+                        : message.content 
+                    }}
+                  />
                 </Card>
               </div>
             ))
