@@ -83,7 +83,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
     const response = await fetch('https://api.ai21.com/studio/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer "b1fb645b-e992-48e1-9dd6-554f8fd0bd99"`,
+        'Authorization': `Bearer b1fb645b-e992-48e1-9dd6-554f8fd0bd99`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
