@@ -115,7 +115,6 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
         conversation_id: conversationId,
         role: role,
         content: content,
-        user_id: session?.user?.id
       })
       .select()
       .single();
