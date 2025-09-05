@@ -746,7 +746,6 @@ const SidebarMenuSubButton = React.forwardRef<
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton";
 
 export const AppSidebar = Sidebar;
-
 export {
   Sidebar,
   SidebarContent,
@@ -774,3 +773,5 @@ export {
   CustomSidebarTrigger,
   useSidebar,
 };
+
+export default App;
